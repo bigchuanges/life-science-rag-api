@@ -1,0 +1,75 @@
+
+Life Sciences, Grade 12, DNA 
+Memo
+Question 1
+1.1 Three components of a DNA nucleotide:
+? Deoxyribose sugar
+? Phosphate group
+? Nitrogenous base (A, T, C, or G)
+1.2 Function of genes:
+? Genes contain the instructions (code) for making proteins, which determine characteristics and cell functions.
+1.3Difference between coding and non-coding DNA:
+? Coding DNA contains genes that code for proteins.
+? Non-coding DNA does not code for proteins but may regulate gene activity.
+Question 2
+2.1 Main DNA location and role:
+? Most DNA is in the nucleus.
+? It stores genetic information and controls cell activities.
+2.2 Extranuclear DNA:
+? DNA found outside the nucleus (e.g., in mitochondria or chloroplasts).
+2.3 Mitochondrial DNA and ancestry:
+? mtDNA is inherited from the mother and is useful in tracing maternal ancestry over generations.
+
+Question 3
+3.1 Two structural differences between DNA and RNA:
+? RNA is single-stranded; DNA is double-stranded.
+? RNA contains ribose sugar; DNA contains deoxyribose.
+? RNA has uracil instead of thymine.
+3.2 Types and locations of RNA:
+? mRNA: Nucleolus and nucleus
+? rRNA: Ribosomes in the cytoplasm
+? tRNA: Cytoplasm
+RNA base that replaces thymine:
+? Uracil (U), which pairs with adenine (A)
+Question 4
+4.1 Function of mRNA:
+? Carries the genetic message from DNA to ribosomes for protein synthesis.
+4.2 Definition of transcription:
+? The process where a section of DNA is copied into mRNA.
+? Occurs in the nucleus.
+4.3 Function of tRNA:
+? Transfers specific amino acids to the ribosome based on the codons on mRNA.
+4.4 Start and stop codons importance:
+? Start codon (AUG) signals where translation begins.
+? Stop codons (UAA, UAG, UGA) signal the end of protein synthesis.
+4.5 Sequence of amino acids:
+? Determined by the sequence of nucleotides (codons) on mRNA, which comes from DNA.
+
+Question 5
+5.1 Phase of DNA replication:
+? Interphase (before mitosis begins)
+5.2 Importance of DNA replication:
+? Ensures that each daughter cell receives an identical copy of the genetic material.
+5.3 What is DNA profiling?
+? Analysis of DNA to identify individuals or determine relationships.
+5.4 Example application:
+? Solving paternity disputes, identifying crime suspects, or identifying missing persons.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "api/chat.js": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "GEMINI_API_KEY": "AIzaSyAjF1uFufPSfqu1BVJaohrwPRnZDGvGzNk",
+    "PINECONE_API_KEY": "pcsk_K2WT4_JYWvjX81Bg5xPJdPjHViiTKgrVZFPKYzbSFtyNw5mjtsPdpuMNaaWnMZMiGSMJV",
+    "PINECONE_INDEX_NAME": "plug-knowledge-base"
+  }
+}

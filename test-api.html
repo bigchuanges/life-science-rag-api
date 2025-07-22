@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head><title>Test Plug API</title></head>
+<body>
+<h2>Test Plug RAG API</h2>
+<button onclick="testAPI1()">Test URL 1</button>
+<button onclick="testAPI2()">Test URL 2</button>
+<div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc; white-space: pre-wrap;"></div>
+<script>
+async function testAPI1() {
+    await testAPI('https://life-science-g2k5dc3fU-vulalearn.vercel.app/api/chat', 'URL 1');
+}
+
+async function testAPI2() {
+    await testAPI('https://life-science-213b3vtc2-vulalearn.vercel.app/api/chat', 'URL 2');
+}
+
+async function testAPI(url, name) {
+    document.getElementById('result').innerHTML = 'Testing ' + name + '...';
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: 'What is DNA?' })
+        });
+        const data = await response.json();
+        document.getElementById('result').innerHTML = name + ' SUCCESS:\n' + JSON.stringify(data, null, 2);
+    } catch (error) {
+        document.getElementById('result').innerHTML = name + ' Error: ' + error;
+    }
+}
+</script>
+</body>
+</html>
