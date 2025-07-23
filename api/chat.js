@@ -1,90 +1,128 @@
-// FORCE UPDATE: 2025-07-22-23-45
-// DEBUG VERSION 4.0 - FORCED UPDATE WITH NEW ERROR HANDLING
-// DEBUG VERSION 4.0 - FORCED UPDATE WITH NEW ERROR HANDLING
+// FORCE UPDATE: 2025-07-23-FINAL
+// RAG API V4.1 - PRODUCTION READY WITH PROPER ERROR HANDLING
 export default async function handler(req, res) {
-  // Enable CORS
+  // Enable CORS - MUST BE FIRST
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   
+  // Handle preflight OPTIONS requests
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
   
+  // Handle GET requests for health check
   if (req.method === 'GET') {
     return res.status(200).json({ 
-      message: 'Plug RAG API is working - DEBUG V4.0!', 
+      message: 'Plug RAG API is working - V4.1 PRODUCTION!', 
       status: 'ready',
-      version: '4.0',
+      version: '4.1',
       timestamp: new Date().toISOString(),
-      features: ['Life Science knowledge', 'CAPS Grade 12', 'DNA & Evolution content']
+      features: ['Life Science knowledge', 'CAPS Grade 12', 'DNA & Evolution content'],
+      endpoints: {
+        'GET /api/chat': 'Health check',
+        'POST /api/chat': 'Send Life Sciences question'
+      }
     });
   }
   
+  // Handle POST requests
   if (req.method === 'POST') {
     const { message } = req.body || {};
     
-    console.log('=== DEBUG V4.0: POST REQUEST RECEIVED ===');
-    console.log('Message:', message);
-    console.log('Environment variables check:');
-    console.log('GEMINI_API_KEY exists:', !!process.env.GEMINI_API_KEY);
-    console.log('PINECONE_API_KEY exists:', !!process.env.PINECONE_API_KEY);
-    console.log('PINECONE_INDEX_NAME:', process.env.PINECONE_INDEX_NAME);
+    // Validate input
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Message is required and must be a non-empty string',
+        version: '4.1'
+      });
+    }
+    
+    console.log('=== RAG API V4.1: POST REQUEST ===');
+    console.log('Message received:', message);
+    console.log('Environment check:');
+    console.log('- GEMINI_API_KEY exists:', !!process.env.GEMINI_API_KEY);
+    console.log('- PINECONE_API_KEY exists:', !!process.env.PINECONE_API_KEY);
+    console.log('- PINECONE_INDEX_NAME:', process.env.PINECONE_INDEX_NAME);
     
     try {
-      console.log('=== STEP 1: Importing libraries ===');
+      console.log('Step 1: Importing libraries...');
       
-      // Import libraries dynamically
+      // Dynamic imports for Vercel compatibility
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
-      console.log('✅ GoogleGenerativeAI imported successfully');
-      
       const { Pinecone } = await import('@pinecone-database/pinecone');
-      console.log('✅ Pinecone imported successfully');
       
-      console.log('=== STEP 2: Initializing services ===');
+      console.log('✅ Libraries imported successfully');
+      
+      console.log('Step 2: Initializing services...');
+      
+      // Validate environment variables
+      if (!process.env.GEMINI_API_KEY) {
+        throw new Error('GEMINI_API_KEY environment variable is not set');
+      }
+      if (!process.env.PINECONE_API_KEY) {
+        throw new Error('PINECONE_API_KEY environment variable is not set');
+      }
+      if (!process.env.PINECONE_INDEX_NAME) {
+        throw new Error('PINECONE_INDEX_NAME environment variable is not set');
+      }
       
       // Initialize services
       const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      console.log('✅ GoogleGenerativeAI initialized');
-      
       const chatModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      console.log('✅ Chat model initialized');
       
       const pinecone = new Pinecone({ 
         apiKey: process.env.PINECONE_API_KEY
       });
-      console.log('✅ Pinecone client initialized');
-      
       const index = pinecone.index(process.env.PINECONE_INDEX_NAME);
-      console.log('✅ Pinecone index initialized');
       
-      console.log('=== STEP 3: Performing vector search ===');
+      console.log('✅ Services initialized successfully');
       
-      // Use simple vector search
-      const dummyVector = new Array(768).fill(0.1);
+      console.log('Step 3: Creating embedding for search...');
       
+      // Create embedding using Gemini's embedding model
+      const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
+      const embeddingResult = await embeddingModel.embedContent(message);
+      const queryVector = embeddingResult.embedding.values;
+      
+      console.log('✅ Embedding created, vector length:', queryVector.length);
+      
+      console.log('Step 4: Searching knowledge base...');
+      
+      // Search Pinecone with the actual embedding
       const searchResults = await index.query({
-        vector: dummyVector,
+        vector: queryVector,
         topK: 5,
         includeMetadata: true,
-        filter: { curriculum: 'caps', grade: 'grade12', subject: 'life-science' }
+        filter: { 
+          curriculum: 'caps', 
+          grade: 'grade12', 
+          subject: 'life-science' 
+        }
       });
       
-      console.log('✅ Vector search completed');
+      console.log('✅ Knowledge base search completed');
       console.log('Search results:', searchResults.matches?.length || 0, 'matches found');
       
-      console.log('=== STEP 4: Preparing context ===');
+      console.log('Step 5: Preparing context...');
       
-      // Prepare context
+      // Prepare context from search results
       let contextText = '';
       let sourcesUsed = [];
       
       if (searchResults.matches && searchResults.matches.length > 0) {
-        contextText = searchResults.matches
-          .map(chunk => {
-            if (chunk.metadata && chunk.metadata.filename) {
-              sourcesUsed.push(chunk.metadata.filename);
-              return `📚 Source: ${chunk.metadata.filename}\n${chunk.metadata.text || chunk.metadata.content || 'No content available'}`;
+        const relevantChunks = searchResults.matches
+          .filter(match => match.score > 0.7) // Only use high-confidence matches
+          .slice(0, 3); // Limit to top 3 results
+        
+        contextText = relevantChunks
+          .map((chunk, index) => {
+            if (chunk.metadata) {
+              const source = chunk.metadata.filename || chunk.metadata.source || `Source ${index + 1}`;
+              sourcesUsed.push(source);
+              const content = chunk.metadata.text || chunk.metadata.content || '';
+              return `📚 **${source}** (Relevance: ${(chunk.score * 100).toFixed(1)}%)\n${content}`;
             }
             return '';
           })
@@ -92,62 +130,77 @@ export default async function handler(req, res) {
           .join('\n\n---\n\n');
       }
       
-      console.log('✅ Context prepared, sources:', sourcesUsed.length);
+      console.log('✅ Context prepared from', sourcesUsed.length, 'sources');
       
-      console.log('=== STEP 5: Generating AI response ===');
+      console.log('Step 6: Generating response...');
       
-      // Generate response
-      const systemInstruction = `You are Plug, an expert South African tutor specializing in CAPS Grade 12 Life Sciences.
+      // Create the prompt with context
+      const systemInstruction = `You are Plug, a cool and knowledgeable South African tutor specializing in CAPS Grade 12 Life Sciences. You make learning fun and engaging!
 
-${contextText ? `**RELEVANT CURRICULUM CONTENT:**\n${contextText}\n` : ''}
+${contextText ? `**RELEVANT CAPS CURRICULUM CONTENT:**\n${contextText}\n\n` : ''}
 
-You're cool, relatable, and make learning enjoyable. Use the curriculum content above as your primary knowledge source. Be concise, engaging, and focus on helping students understand concepts clearly.
+Guidelines:
+- Use the curriculum content above as your PRIMARY knowledge source
+- Be concise but comprehensive in your explanations
+- Use relatable examples and analogies
+- Keep a friendly, encouraging tone
+- If the curriculum content doesn't fully answer the question, supplement with your general Life Sciences knowledge
+- Always aim to help students understand concepts clearly
 
-If no relevant curriculum content is found, still answer based on your Life Sciences knowledge but mention that you're drawing from general knowledge.`;
+Student's question: ${message}
 
-      const prompt = `${systemInstruction}\n\nUser: ${message}\nPlug:`;
-      
-      const result = await chatModel.generateContent(prompt);
-      const response = result.response.text();
+Your response:`;
+
+      const result = await chatModel.generateContent(systemInstruction);
+      const aiResponse = result.response.text();
       
       console.log('✅ AI response generated successfully');
-      console.log('=== SUCCESS: Returning response ===');
+      console.log('Response length:', aiResponse.length, 'characters');
       
+      // Return successful response
       return res.status(200).json({
-        response: response,
+        response: aiResponse,
         success: true,
-        sourcesUsed: [...new Set(sourcesUsed)],
-        relevantSources: searchResults.matches?.length || 0,
-        receivedMessage: message,
-        version: '4.0',
-        timestamp: new Date().toISOString()
+        metadata: {
+          sourcesUsed: [...new Set(sourcesUsed)],
+          relevantSources: searchResults.matches?.length || 0,
+          highConfidenceMatches: searchResults.matches?.filter(m => m.score > 0.7).length || 0,
+          searchQuery: message,
+          version: '4.1',
+          timestamp: new Date().toISOString()
+        }
       });
       
     } catch (error) {
-      console.error('=== ERROR CAUGHT IN DEBUG V4.0 ===');
-      console.error('Error name:', error.name);
+      console.error('=== ERROR IN RAG API V4.1 ===');
+      console.error('Error type:', error.constructor.name);
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
-      console.error('Full error object:', error);
       
-      // Return the ACTUAL error details - NO GENERIC MESSAGE
+      // Return detailed error for debugging
       return res.status(500).json({
         success: false,
-        version: '4.0',
-        actualError: error.message,
-        errorName: error.name,
-        errorStack: error.stack,
-        errorDetails: error.toString(),
-        receivedMessage: message,
-        timestamp: new Date().toISOString(),
-        debugInfo: {
-          hasGeminiKey: !!process.env.GEMINI_API_KEY,
-          hasPineconeKey: !!process.env.PINECONE_API_KEY,
-          pineconeIndex: process.env.PINECONE_INDEX_NAME
+        error: 'Internal server error',
+        debug: {
+          errorType: error.constructor.name,
+          errorMessage: error.message,
+          version: '4.1',
+          timestamp: new Date().toISOString(),
+          receivedMessage: message,
+          environmentCheck: {
+            hasGeminiKey: !!process.env.GEMINI_API_KEY,
+            hasPineconeKey: !!process.env.PINECONE_API_KEY,
+            pineconeIndex: process.env.PINECONE_INDEX_NAME
+          }
         }
       });
     }
   }
   
-  return res.status(405).json({ error: 'Method not allowed', version: '4.0' });
+  // Handle unsupported methods
+  return res.status(405).json({ 
+    error: 'Method not allowed',
+    supportedMethods: ['GET', 'POST', 'OPTIONS'],
+    version: '4.1'
+  });
 }
